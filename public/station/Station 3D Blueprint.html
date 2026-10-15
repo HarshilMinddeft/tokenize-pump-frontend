@@ -286,11 +286,19 @@ function zone(key, label, x, z, view = {}, ry = 0) {
 }
 
 // ---------- 1. road (Z +38..+58), 4 lanes ----------
+M.sand = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+  x.fillStyle = '#d8bf93'; x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 2600; i++) { const v = rnd(); x.fillStyle = v < .5 ? 'rgba(160,128,86,' + (.08 + rnd() * .12) + ')' : 'rgba(245,228,196,' + (.08 + rnd() * .14) + ')'; const s2 = 1 + rnd() * 3; x.fillRect(rnd() * 256, rnd() * 256, s2, s2); }
+  for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(150,140,128,.35)'; x.beginPath(); x.arc(rnd() * 256, rnd() * 256, 1 + rnd() * 2, 0, 7); x.fill(); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(24, 24); t.anisotropy = 8;
+  return std('desert_sand', 0xffffff, { map: t, roughness: 1 });
+})();
 const ground = grp('site_ground', station);
 box('asphalt_base', 240, 0.1, 190, M.asphalt, ground, 0, -0.1, 10);
-box('back_verge', 240, 0.06, 40, M.grass, ground, 0, -0.01, -62);
+box('back_verge', 240, 0.06, 40, M.sand, ground, 0, -0.01, -62);
 box('front_sidewalk', 240, 0.25, 2.5, M.kerb, ground, 0, -0.1, 59.25);
-box('front_verge', 240, 0.06, 30, M.grass, ground, 0, -0.01, 75.5);
+box('front_verge', 240, 0.06, 30, M.sand, ground, 0, -0.01, 75.5);
 for (const z of [38.4, 57.6]) box('road_edge_line', 240, 0.02, 0.2, M.marking, ground, 0, 0, z);
 for (const z of [43, 48, 53]) for (let x = -118; x < 118; x += 7) box('lane_dash', z === 48 ? 4 : 3, 0.02, 0.18, M.marking, ground, x, 0, z);
 function arrow(parent, x, z, ry) {
@@ -817,7 +825,7 @@ for (const [x, z] of [[-62, -6], [-86, 33], [-60, 33], [-11, 33], [30.5, 33], [2
 
 // ---------- road traffic: 3 dark sedans + 1 white SUV ----------
 // moving traffic: 8 cars on the 4-lane road + 2 cars looping the forecourt
-const roadMovers = [[-18, 40.7, 1, 12], [102, 40.7, 1, 12], [22, 45.5, 1, 15], [-98, 45.5, 1, 15], [-42, 55.3, -1, 13], [78, 55.3, -1, 13], [36, 50.5, -1, 14], [-84, 50.5, -1, 14]]
+const roadMovers = [[-18, 40.7, 1, 12], [289, 40.7, 1, 12], [-325, 40.7, 1, 12], [22, 45.5, 1, 15], [329, 45.5, 1, 15], [-285, 45.5, 1, 15], [-42, 55.3, -1, 13], [265, 55.3, -1, 13], [-349, 55.3, -1, 13], [36, 50.5, -1, 14], [343, 50.5, -1, 14], [-271, 50.5, -1, 14]]
   .map(([x, z, dir, v]) => ({ g: car(station, 'black', x, 0, z, dir > 0 ? 0 : PI), dir, v }));
 // visiting cars: road → service stop → back to road (pumps, car wash, EV)
 const LANE_V = { 40.7: 12, 45.5: 15, 50.5: 14, 55.3: 13 };
@@ -826,39 +834,39 @@ const pth = (pts, o = {}) => { const c = new THREE.CatmullRomCurve3(pts.map(([x,
 const EXIT_N = [[22, -3], [26.3, 2], [26.3, 28], [27, 34], [30, 38]];
 const visitors = [
   { name: 'refuel_canopy_B', delay: 0, segs: [
-    rd(40.7, 1, -125, -52),
+    rd(40.7, 1, -460, -52),
     pth([[-52, 40.7], [-43, 39.5], [-37, 36], [-35.3, 31], [-35.3, 24]], { stop: 9 }),
     pth([[-35.3, 24], [-35.3, 12], [-35, 4], [-31, -1], [-24, -3.5], [8, -3.5], ...EXIT_N, [36, 45.5]]),
-    rd(45.5, 1, 36, 125)] },
+    rd(45.5, 1, 36, 460)] },
   { name: 'refuel_canopy_C', delay: 7, segs: [
-    rd(45.5, 1, -125, -46),
+    rd(45.5, 1, -460, -46),
     pth([[-46, 45.5], [-38, 43], [-31, 39.5], [-29, 34], [-26, 31], [-15, 30], [-5, 29], [-0.7, 24], [-0.7, 10]], { stop: 10 }),
     pth([[-0.7, 10], [-0.7, 1], [1, -2.5], [8, -3.5], ...EXIT_N, [34, 40.7]]),
-    rd(40.7, 1, 34, 125)] },
+    rd(40.7, 1, 34, 460)] },
   { name: 'car_wash_visit_2', g: washCar2, delay: 20, segs: [
-    rd(45.5, 1, -125, -84),
+    rd(45.5, 1, -460, -84),
     pth([[-84, 45.5], [-76, 43], [-72, 36], [-72, 22], [-72.5, 12], [-74.5, 6], [-77.5, 3.7], [-80, 3.5]], { stop: 3 }),
     pth([[-80, 3.5], [-83, 3.5], [-86.5, 3.5]], { v: 2.5, stop: 12, tag: 'wash', bay: 1 }),
     pth([[-86.5, 3.5], [-93, 3.5], [-96, 2], [-96.3, -1], [-93, -3.4], [-88, -3.5], [-72, -3.5], [-66.5, 1], [-66, 26], [-64, 34], [-59, 38.5], [-54, 40.7]]),
-    rd(40.7, 1, -54, 125)] },
+    rd(40.7, 1, -54, 460)] },
   { name: 'car_wash_visit', g: washCar, delay: 3, segs: [
-    rd(40.7, 1, -125, -86),
+    rd(40.7, 1, -460, -86),
     pth([[-86, 40.7], [-77, 39], [-72, 34], [-72, 22], [-73.5, 16], [-77, 13.3], [-80, 13]], { stop: 3 }),
     pth([[-80, 13], [-83, 13], [-86.5, 13]], { v: 2.5, stop: 12, tag: 'wash' }),
     pth([[-86.5, 13], [-93, 13], [-96.5, 11], [-97.5, 5], [-95, -1], [-88, -3.5], [-72, -3.5], [-66.5, 1], [-66, 26], [-64, 34], [-59, 38.5], [-54, 40.7]]),
-    rd(40.7, 1, -54, 125)] },
+    rd(40.7, 1, -54, 460)] },
   { name: 'ev_charge_visit_2', model: 'evcar', delay: 30, segs: [
-    rd(50.5, -1, 125, 64),
+    rd(50.5, -1, 460, 64),
     pth([[64, 50.5], [57.5, 48], [53, 43.5], [51.5, 37], [51.5, 22], [51.5, 13], [51.5, 7.6]], { stop: 16, tag: 'charge', bay: 2 }),
     pth([[51.5, 7.6], [51.5, 11], [52.3, 15]], { v: 2, reverse: true, stop: 1 }),
     pth([[52.3, 15], [46, 17.8], [38, 18.5], [30, 20.5], [26.8, 25], [26.3, 28], [27, 34], [30, 38], [34, 40.7]]),
-    rd(40.7, 1, 34, 125)] },
+    rd(40.7, 1, 34, 460)] },
   { name: 'ev_charge_visit', model: 'tesla', delay: 12, segs: [
-    rd(50.5, -1, 125, 54),
+    rd(50.5, -1, 460, 54),
     pth([[54, 50.5], [48, 48], [43, 44], [40.5, 39], [40, 30], [41, 22], [44, 17], [46.5, 12], [46.5, 7.6]], { stop: 16, tag: 'charge', bay: 1 }),
     pth([[46.5, 7.6], [46.5, 11], [45.5, 15]], { v: 2, reverse: true, stop: 1 }),
     pth([[45.5, 15], [38, 17], [30, 20], [26.8, 25], [26.3, 28], [27, 34], [30, 38], [34, 40.7]]),
-    rd(40.7, 1, 34, 125)] },
+    rd(40.7, 1, 34, 460)] },
 ];
 const svc = (bay, model, delay) => {
   const bx = { 2: -46.25, 3: -37.75 }[bay];
@@ -867,7 +875,7 @@ const svc = (bay, model, delay) => {
   const exPts = [[sx, -9], ...[[-44, -9.2], [-37, -9.2]].filter(p => p[0] > sx + 1.5), [-31, -7.8], [-25, -5], [-20, -3.6], [8, -3.5], ...EXIT_N, [36, 45.5]];
   return { name: 'service_bay_' + bay + '_' + model, model, delay, segs: [
     { type: 'gate', bay },
-    rd(40.7, 1, -125, -50),
+    rd(40.7, 1, -460, -50),
     pth([[-50, 40.7], [-43, 39.2], [-40.5, 35], [-40, 28], ...inPts], { stop: 0.5 }),
     { type: 'lift', bay, to: 1.46, dur: 3.5 },
     { type: 'hold', bay, dur: 14 },
@@ -875,7 +883,7 @@ const svc = (bay, model, delay) => {
     pth([[bx, -24], [bx, -14], [bx - 1.3, -10.5], [sx, -9]], { v: 3.2, reverse: true, stop: 0.6 }),
     { type: 'release', bay },
     pth(exPts),
-    rd(45.5, 1, 36, 125)] };
+    rd(45.5, 1, 36, 460)] };
 };
 visitors.push(svc(2, 'mclaren', 4), svc(2, 'jiotto', 6), svc(3, 'ferrari', 16), svc(3, 'bugatti', 18));
 window.__traffic = { visitors, roadMovers };
@@ -1087,7 +1095,8 @@ async function buildCar(key) {
   lod.addLevel(pivot, 0); lod.addLevel(mk(160), 60); lod.addLevel(mk(70), 110);
   return lod;
 }
-const carsReady = Promise.all(Object.keys(CAR_MODELS).map(async k => [k, await buildCar(k)])).then(list => {
+window.MODELS = { done: 0, total: Object.keys(CAR_MODELS).length };
+const carsReady = Promise.all(Object.keys(CAR_MODELS).map(async k => { const c = await buildCar(k); window.MODELS.done++; return [k, c]; })).then(list => {
   const protos = Object.fromEntries(list);
   for (const sl of carSlots) {
     const inst = protos[sl.model].clone(); sl.g.add(inst);
@@ -1184,7 +1193,7 @@ const carsReady = Promise.all(Object.keys(CAR_MODELS).map(async k => [k, await b
     requestAnimationFrame(idle);
   };
   requestAnimationFrame(idle);
-}).catch(e => { console.error('car load failed', e); window.CARS_LOADED = -1; });
+}).catch(e => { console.error('car load failed', e); window.CARS_LOADED = -1; window.PARK_LOADED = window.PARK_LOADED || -1; });
 
 const R = stage._renderer, S = stage._scene, C = stage._camera, CT = stage._controls, key = stage._key;
 R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.1; R.outputColorSpace = THREE.SRGBColorSpace;
@@ -1206,7 +1215,48 @@ for (let i = 0; i < 110; i++) {
   const b = box('city_block', w, h, w * (0.6 + rnd() * .6), cityMat, city, Math.cos(a) * r, 0, Math.sin(a) * r); b.rotation.y = rnd() * PI;
   if (rnd() > .5) box('city_window_band', w + .02, 0.4, 0.2, winMat, city, Math.cos(a) * r, h * .6, Math.sin(a) * r).rotation.y = b.rotation.y;
 }
-box('desert_ground', 1600, 0.05, 1600, std('far_ground', 0x9a8574, { roughness: 1 }), city, 0, -0.15, 0);
+{
+  const farSand = M.sand.clone(); farSand.map = M.sand.map.clone(); farSand.map.repeat.set(200, 200); farSand.map.needsUpdate = true; farSand.color.set(0xf2e6d2);
+  const lawn = new THREE.Mesh(new THREE.PlaneGeometry(2000, 2000), farSand); lawn.name = 'far_desert'; lawn.rotation.x = -PI / 2; lawn.position.set(0, -0.03, 10); lawn.receiveShadow = true; city.add(lawn);
+  const rc = document.createElement('canvas'); rc.width = 64; rc.height = 192; const rx = rc.getContext('2d');
+  rx.fillStyle = '#' + M.asphalt.color.getHexString(); rx.fillRect(0, 0, 64, 192);
+  rx.fillStyle = '#e9e6df'; rx.fillRect(0, 1, 64, 2); rx.fillRect(0, 189, 64, 2);
+  for (const zz of [43, 48, 53]) { const py = (zz - 38.4) / 19.2 * 192, len = zz === 48 ? 36 : 27; rx.fillRect(0, py - 1, len, 2); }
+  const rt = new THREE.CanvasTexture(rc); rt.colorSpace = THREE.SRGBColorSpace; rt.wrapS = THREE.RepeatWrapping; rt.anisotropy = 8;
+  for (const side of [-1, 1]) {
+    const L = 680, t = rt.clone(); t.needsUpdate = true; t.repeat.set(L / 7, 1);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(L, 19.2), new THREE.MeshStandardMaterial({ map: t, roughness: 0.9 })); m.name = 'highway_extension';
+    m.rotation.x = -PI / 2; m.position.set(side * (120 + L / 2), 0.004, 48); m.receiveShadow = true; city.add(m);
+    for (const zz of [36, 60]) { const k = new THREE.Mesh(new THREE.PlaneGeometry(L, 2.4), M.kerb); k.name = 'highway_shoulder'; k.rotation.x = -PI / 2; k.position.set(side * (120 + L / 2), 0.003, zz < 48 ? 37.2 : 58.8); city.add(k); }
+  }
+}
+{
+  // desert scrub (ghaf / hamd / dry tufts) scattered on the sand, as in the site photos
+  const geo = new THREE.IcosahedronGeometry(1, 1); geo.translate(0, 0.55, 0);
+  const pos = geo.attributes.position; for (let i = 0; i < pos.count; i++) pos.setXYZ(i, pos.getX(i) * (0.85 + rnd() * .3), pos.getY(i) * (0.8 + rnd() * .3), pos.getZ(i) * (0.85 + rnd() * .3)); geo.computeVertexNormals();
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, flatShading: true }); mat.name = 'desert_scrub';
+  const N = 2600, im = new THREE.InstancedMesh(geo, mat, N); im.name = 'desert_scrub';
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), sc = new THREE.Vector3(), p = new THREE.Vector3(), col = new THREE.Color();
+  const greens = [0x6f8a3c, 0x7e9446, 0x5f7a35, 0x8c9a52, 0x9aa060], dry = [0xa88f62, 0x9c8358, 0xb49d70];
+  const inSite = (x, z) => (Math.abs(x) < 121 && z > -85 && z < 34) || (z > 34.5 && z < 61.5) || (Math.abs(x) < 121 && z > 61 && z < 91 && rnd() < .55);
+  let n = 0, guard = 0;
+  while (n < N && guard++ < 40000) {
+    const rr = 30 + Math.pow(rnd(), 0.7) * 560, a = rnd() * PI * 2, x = Math.cos(a) * rr * 1.2, z = 10 + Math.sin(a) * rr;
+    if (inSite(x, z)) continue;
+    const isDry = rnd() < .28, big = rnd() < .12, k = (big ? 1.1 + rnd() * .9 : 0.25 + rnd() * .55);
+    p.set(x, -0.05, z); e.set(0, rnd() * PI * 2, 0); q.setFromEuler(e); sc.set(k * (1 + rnd() * .5), k * (isDry ? .5 : .75), k * (1 + rnd() * .5));
+    im.setMatrixAt(n, m4.compose(p, q, sc)); im.setColorAt(n, col.set((isDry ? dry : greens)[Math.floor(rnd() * (isDry ? 3 : 5))]).offsetHSL(0, 0, (rnd() - .5) * .06)); n++;
+  }
+  im.count = n; im.instanceMatrix.needsUpdate = true; im.instanceColor.needsUpdate = true; city.add(im);
+  // site boundary fence (thin posts) behind and beyond the plot
+  const pg = new THREE.CylinderGeometry(0.04, 0.04, 1.8, 5); pg.translate(0, 0.9, 0);
+  const fm = new THREE.MeshStandardMaterial({ color: 0x8d9194, metalness: .6, roughness: .5 }); fm.name = 'fence_post';
+  const pts = []; for (let x = -300; x <= 300; x += 3.2) pts.push([x, -96]); for (let z = -96; z <= 30; z += 3.2) { pts.push([-140, z]); pts.push([140, z]); }
+  const fi = new THREE.InstancedMesh(pg, fm, pts.length); fi.name = 'boundary_fence';
+  pts.forEach(([x, z], i) => fi.setMatrixAt(i, m4.makeTranslation(x, 0, z))); city.add(fi);
+  const wm = new THREE.MeshStandardMaterial({ color: 0x9aa0a4, metalness: .5, roughness: .6, transparent: true, opacity: .35, side: THREE.DoubleSide, depthWrite: false }); wm.name = 'fence_mesh';
+  for (const [cx, cz, w, ry] of [[0, -96, 600, 0], [-140, -33, 126, PI / 2], [140, -33, 126, PI / 2]]) { const f = new THREE.Mesh(new THREE.PlaneGeometry(w, 1.6), wm); f.name = 'fence_wire'; f.position.set(cx, 0.9, cz); f.rotation.y = ry; city.add(f); }
+}
 S.add(city);
 // spec lights
 S.traverse(o => {
@@ -1300,9 +1350,9 @@ window.flyToZone = flyTo;
     // lane occupants (road cars + visitors on a road segment) for simple car-following
     const occ = roadMovers.map(m => ({ x: m.g.position.x, z: m.g.position.z, dir: m.dir, wrap: true, ref: m }));
     for (const v of visitors) { if (v.onRoad) { const sg = v.segs[v.i]; occ.push({ x: v.x, z: sg.z, dir: sg.dir, wrap: false, ref: v }); } else if (v.g.visible) for (const [lz, ld] of [[40.7, 1], [45.5, 1], [50.5, -1], [55.3, -1]]) if (Math.abs(v.g.position.z - lz) < 2.2) occ.push({ x: v.g.position.x, z: lz, dir: ld, wrap: false, ref: v }); }
-    const gapAhead = (x, z, dir, self, wrap) => { let g = 1e9; for (const o of occ) { if (o.ref === self || o.z !== z || o.dir !== dir) continue; let d = dir * (o.x - x); if (d <= 0 && wrap && o.wrap) d += 240; if (d > 0) g = Math.min(g, d); } return g; };
+    const gapAhead = (x, z, dir, self, wrap) => { let g = 1e9; for (const o of occ) { if (o.ref === self || o.z !== z || o.dir !== dir) continue; let d = dir * (o.x - x); if (d <= 0 && wrap && o.wrap) d += 920; if (d > 0) g = Math.min(g, d); } return g; };
     const follow = gap => Math.max(0, Math.min(1, (gap - 7) / 12));
-    for (const m of roadMovers) { m.k = follow(gapAhead(m.g.position.x, m.g.position.z, m.dir, m, true)); let x = m.g.position.x + m.dir * m.v * m.k * dt; if (x > 120) x -= 240; if (x < -120) x += 240; m.g.position.x = x; }
+    for (const m of roadMovers) { m.k = follow(gapAhead(m.g.position.x, m.g.position.z, m.dir, m, true)); let x = m.g.position.x + m.dir * m.v * m.k * dt; if (x > 460) x -= 920; if (x < -460) x += 920; m.g.position.x = x; }
     // obstacle list: every visible moving/stopped car on the site
     const obs = [];
     for (const m of roadMovers) obs.push({ ref: m, x: m.g.position.x, z: m.g.position.z, hd: [m.dir, 0], moving: (m.k ?? 1) > 0.05 });
