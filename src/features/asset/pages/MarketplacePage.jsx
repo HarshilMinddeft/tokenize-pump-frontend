@@ -248,15 +248,6 @@ const MarketplacePage = ({ isPublic = false }) => {
           ) : (
             <EmptyState
               title="No assets are currently listed"
-              action={
-                <Button
-                  variant="soft"
-                  size="sm"
-                  onClick={() => navigate('/fractionalize-asset')}
-                >
-                  Go to your assets
-                </Button>
-              }
             >
               When an asset owner lists shares on the marketplace they will appear here. Check back soon.
             </EmptyState>
